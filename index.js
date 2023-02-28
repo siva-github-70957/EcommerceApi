@@ -147,17 +147,31 @@ app.post('/addproduct', async (req, res) => {
 })
 
 
-app.post('/toCart', async (req, res) => {
+app.get('/getallproducts', async (req, res) => {
+    const response = await ProductModel.find({});
+    res.json(response);
+})
+
+app.get('/toCart/:id', async (req, res) => {
     const { token } = req.cookies;
-    const { id } = req.body;
+    const { id } = req.params;
+    console.log("product id", id);
+    const allproducts = [];
     if (token) {
         jwt.verify(token, process.env.SKEY, {}, (err, userData) => {
             if (err) { res.json(null) }
-            const cartDoc = CartModel.create({
-                userId: userData._id,
-                productId: id
-            });
-            res.json(cartDoc);
+            CartModel.find({ user: userData.id })
+                .then((doc) => {
+                    if (!doc) {
+                        CartModel.create({
+                            user: userData.id,
+                            productId: id
+                        }).then((doc) => res.json(doc));
+                    }
+                    else {
+                        res.json(doc);
+                    }
+                });
         })
     }
     else {
@@ -165,9 +179,49 @@ app.post('/toCart', async (req, res) => {
     }
 })
 
+app.post('/addtocart', (req, res) => {
+    const { token } = req.cookies;
+    const { cartnewitems } = req.body;
+    console.log(cartnewitems);
+    if (token) {
+        jwt.verify(token, process.env.SKEY, {}, (err, userData) => {
+            if (err) { res.json(null) }
+            CartModel.replaceOne(
+                { user: userData.id },
+                { user: userData.id, productId: cartnewitems })
+                .then((doc) => res.json(doc))
+        })
+    }
+    else {
+        res.json(null);
+    }
+})
+
+app.get('/getcartitems', (req, res) => {
+    const { token } = req.cookies;
+    if (token) {
+        jwt.verify(token, process.env.SKEY, {}, (err, userData) => {
+            if (err) { res.json(null) }
+            CartModel.find({ user: userData.id })
+                .then((doc) => {
+                    res.json(doc);
+                })
+        })
+    }
+    else {
+        res.json(null);
+    }
+})
+
+app.get('/finditemsforcart/:item', (req, res) => {
+    const { item } = req.params;
+    ProductModel.find({ _id: item })
+        .then((doc) => res.json(doc));
+})
+
 app.get('/myproducts/:id', async (req, res) => {
     const { id } = req.params;
-    const product = await ProductModel.findById({ _id: id });
+    const product = await ProductModel.findOne({ _id: id });
     res.json(product);
 })
 
