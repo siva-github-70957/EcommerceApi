@@ -18,10 +18,11 @@ var fs = require('fs');
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-    credentials: true,
-    origin: 'https://bliss-ecommerce.netlify.app/'
-}))
+// app.use(cors({
+//     credentials: true,
+//     origin: 'https://bliss-ecommerce.netlify.app/'
+// }))
+app.use(cors());
 
 cloudinary.config({
     cloud_name: "divohvzqy",
